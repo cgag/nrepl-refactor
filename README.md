@@ -11,8 +11,8 @@ You can play with it by just evaling forms in the comment at the button of nrepl
 ## TODO
 
 Some manual test cases as well as generative testing (simple-check) that
-(= form (unthread-last (thread-last form)))
-(= form (unthread-first (thread-first form)))
+  * (= form (unthread-last (thread-last form)))  
+  * (= form (unthread-first (thread-first form)))
 
 Editor integration for vim and light table.
 
