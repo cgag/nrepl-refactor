@@ -8,6 +8,16 @@ Currently only contains (poorly manually tested) refactoring to thread and unthr
 
 You can play with it by just evaling forms in the comment at the button of nrepl_refactor.clj.  To interact with it properly see the nrepl readme, particularly the bits about middleware.
 
+## TODO
+
+Some manual test cases as well as generative testing (simple-check) that
+(= form (unthread-last (thread-last form)))
+(= form (unthread-first (thread-first form)))
+
+Editor integration for vim and light table.
+
+Investigate the refactoring capabilities of clj-refactor.el and clojure-refactoring.
+
 ## License
 
 Copyright © 2014 FIXME
