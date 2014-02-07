@@ -1,5 +1,6 @@
 (ns io.curtis.nrepl-refactor
-  (:require [clojure.walk :as walk]
+  (:require [clojure.pprint :refer [pprint]]
+            [clojure.walk :as walk]
             [clojure.tools.nrepl.transport :as t]
             [clojure.tools.nrepl.misc :refer [response-for]]
             [clojure.tools.nrepl.middleware :refer [set-descriptor!]]
@@ -113,6 +114,12 @@
 
   (with-open [conn (repl/connect :port port)]
     (-> (repl/client conn 1000)                                                 
-        (repl/message {:op :refactor.thread-last                                
-                       :code "(map f (map square (filter even? [1 2 3 4 5])))"})
-        repl/response-values)))
+        (repl/message {:op :refactor.cycle-privacy                                
+                       :code "(def x 10)"
+                       ;:code "(map f (map square (filter even? [1 2 3 4 5])))"
+                       }
+                       )
+        doall
+        pprint
+        ;repl/response-values
+        )))
