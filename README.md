@@ -6,12 +6,12 @@ Currently only contains (poorly manually tested) refactoring to thread and unthr
 
 ## Usage
 
-You can play with it by just evaling forms in the comment at the button of nrepl_refactor.clj.  To interact with it properly see the nrepl readme, particularly the bits about middleware.
+You can play with it by just evaling forms in the comment at the bottom of nrepl_refactor.clj.  See also the nREPL readme middleware section.
 
 ## TODO
 
-Some manual test cases as well as generative testing (simple-check) that
-  * (= form (unthread-last (thread-last form)))  
+Some hand-written test cases as well as generative testing (simple-check) that check
+  * (= form (unthread-last  (thread-last form)))  
   * (= form (unthread-first (thread-first form)))
 
 Editor integration for vim and light table.
