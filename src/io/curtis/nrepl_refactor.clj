@@ -14,7 +14,8 @@
             (if-not (list? form) 
               (list form)
               (cons (butlast form) (thread-last-forms* (last form)))))]
-    (apply list '->> (reverse (thread-last-forms* form)))))
+    (pr-str 
+      (apply list '->> (reverse (thread-last-forms* form))))))
 
 (defn thread-first [form]
   (letfn [(thread-first-forms* [form]
@@ -22,7 +23,8 @@
               (list form)
               (cons (cons (first form) (drop 2 form)) 
                     (thread-first-forms* (second form)))))]
-    (apply list '-> (reverse (thread-first-forms* form)))))
+    (pr-str 
+      (apply list '-> (reverse (thread-first-forms* form))))))
 
 
 ;; TODO: just pass in the symbol once, can't figure out how to get from ->>
@@ -31,10 +33,12 @@
   (walk/prewalk (fn [x] 
                   (if (and (seq? x) 
                            (contains? symbols (first x)))
-                      (macroexpand x)
+                    (macroexpand x)
                     x))
                 form))
 
+;; TODO: goddamn it, if you unthread something with
+;; a ' in it, the reader gives you (quote ...)
 (defn unthread-last [form]
   (macroexpand-only #{'->> `->>} form))
 
@@ -69,38 +73,40 @@
     new-fn-form))
 
 (defn cycle-str-keyword [s-or-k]
-  (condp = (class s-or-k)
-    clojure.lang.Keyword (subs (str s-or-k) 1)
-    java.lang.String (keyword s-or-k)))
+  (pr-str
+    (condp = (class s-or-k)
+      clojure.lang.Keyword (subs (str s-or-k) 1)
+      java.lang.String (keyword s-or-k))))
 
 ;; TODO: maybe op should just be refactor and another key should specify which?
-(def refactor-fns {"refactor.identity"       identity
-                   "refactor.thread-last"    thread-last
-                   "refactor.thread-first"   thread-first
-                   "refactor.unthread-last"  unthread-last
-                   "refactor.unthread-first" unthread-first
-                   "refactor.cycle-str-keyword" cycle-str-keyword
-                   "refactor.cycle-privacy" cycle-privacy
-                   "refactor.cycle-collection-type" cycle-collection-type})
+(def refactor-fns {"identity"       identity
+                   "thread-last"    thread-last
+                   "thread-first"   thread-first
+                   "unthread-last"  unthread-last
+                   "unthread-first" unthread-first
+                   "cycle-str-keyword" cycle-str-keyword
+                   "cycle-privacy" cycle-privacy
+                   "cycle-collection-type" cycle-collection-type})
 
 (defn refactor [h]
-  (fn [{:keys [op code transport] :as msg}]
-    (if-not (and code (contains? refactor-fns op))
+  (fn [{:keys [op refactor code transport] :as msg}]
+    (if-not (and (= op "nrepl.refactor")
+                 code 
+                 (contains? refactor-fns refactor))
       (h msg)
-      (let [refactor-f (refactor-fns op)]
+      (let [refactor-f (refactor-fns refactor)]
         (t/send transport (response-for msg 
                                         :status :done
                                         :value (-> code
                                                    read-string
-                                                   refactor-f
-                                                   str)))))))
+                                                   refactor-f)))))))
 
 (set-descriptor! #'refactor
                  {:expects #{}
                   :handles {}})
 
 (comment
-  (def port 10000)
+  "(def ^:private port 10000)"
   (def server (start-server :port port
                             :handler (default-handler #'refactor)))
 
@@ -114,8 +120,8 @@
 
   (with-open [conn (repl/connect :port port)]
     (-> (repl/client conn 1000)                                                 
-        (repl/message {:op :refactor.cycle-privacy                                
-                       :code "(def x 10)"
+        (repl/message {:op :eval                                
+                       :code "(+ 1 ())"
                        ;:code "(map f (map square (filter even? [1 2 3 4 5])))"
                        }
                        )
@@ -123,3 +129,22 @@
         pprint
         ;repl/response-values
         )))
+
+(comment (a (b (c [1 2 3]))))
+(comment (* 1 2 3))
+(comment
+  (defn do-some-shit [x]
+    (->> [1 2 3 4 5]  
+         (filter even?)  
+         (map square) 
+         (map f))))
+
+(comment
+  (->> [1 2 3 4 5] 
+       (filter even?) 
+       (map square) 
+       (map f)))
+
+;{1 2 3}
+;#{}
+;(* 1 ())
