@@ -30,12 +30,13 @@
 ;; TODO: just pass in the symbol once, can't figure out how to get from ->>
 ;; to clojure.core/->> without literal syntax quote
 (defn macroexpand-only [symbols form]
-  (walk/prewalk (fn [x] 
-                  (if (and (seq? x) 
-                           (contains? symbols (first x)))
-                    (macroexpand x)
-                    x))
-                form))
+  (pr-str
+    (walk/prewalk (fn [x] 
+                    (if (and (seq? x) 
+                             (contains? symbols (first x)))
+                      (macroexpand x)
+                      x))
+                  form)))
 
 ;; TODO: goddamn it, if you unthread something with
 ;; a ' in it, the reader gives you (quote ...)
@@ -132,19 +133,9 @@
 
 (comment (a (b (c [1 2 3]))))
 (comment (* 1 2 3))
-(comment
-  (defn do-some-shit [x]
-    (->> [1 2 3 4 5]  
-         (filter even?)  
-         (map square) 
-         (map f))))
-
-(comment
-  (->> [1 2 3 4 5] 
-       (filter even?) 
-       (map square) 
-       (map f)))
-
-;{1 2 3}
-;#{}
-;(* 1 ())
+(comment (defn square [x] (* x x)))
+(comment (defn double-even-squares [n]
+           (->> (range n) 
+                (filter even?) 
+                (map square) 
+                (map (partial * 2)))))
